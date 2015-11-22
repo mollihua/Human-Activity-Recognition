@@ -1,0 +1,120 @@
+---
+title: 'PML Project: Study Human Activity Recognition'
+author: "Mo Chen"
+date: '2015-11-21'
+output: html_document
+---
+
+## 1. Introduction
+
+Data collected from personal care devices can be used to quantify self movement so as to improve personal health. The goal of this study is to use the data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to evaluate how well they do it. In particular, the outcome variable is classe, which has 5 levels corresponding to correct and incorrect ways of barbell lifts.  
+
+Data source: http://groupware.les.inf.puc-rio.br/har.  
+  
+Reference: Ugulino, Wallace, et al. "Wearable computing: accelerometers’ data classification of body postures and movements." Advances in Artificial Intelligence-SBIA 2012. Springer Berlin Heidelberg, 2012. 52-61.  
+
+## 2. Data preprocessing  
+
+```{r, cache=TRUE}
+# load data
+datax <- read.csv("pml-training.csv",na.strings = c("NA","","#DIV/0!"))
+
+# remove the columns with high NA composition (>75% is NA) 
+nr <- nrow(datax)
+nc <- ncol(datax)
+indna <- c()
+for (i in 1:nc) {
+    nacheck <- sum(is.na(datax[,i]))>0.75*nr
+    if (nacheck==1) {
+        indna <- c(indna,i)
+    }
+}
+datax2 <- datax[,-indna]
+
+# keep the data of complete cases
+datax3 <- datax2[complete.cases(datax2),]
+dim(datax2)
+dim(datax3)
+
+# remove meaningless columns for prediction
+indrm <- grep("timestamp|X|user_name|new_window", names(datax3))
+datax4 <-datax3[,-indrm]
+dim(datax4)
+
+remove(datax2)
+remove(datax3)
+```
+
+## 3. Model Fitting and Predictions  
+
+#### Data preprocessing
+Split the dataset "plm-training.csv" into a training set (60%) and and a testing set (40%).  
+```{r, cache=TRUE}
+# split the dataset "pml-training.csv" into a training set and a testing set
+library(caret)
+library(ggplot2)
+
+inTrain <- createDataPartition(y=datax4$classe, p=0.6, list=FALSE)
+training <- datax4[inTrain,]
+testing <- datax4[-inTrain,]
+dim(training)
+dim(testing)
+```
+
+#### Model fitting  
+The random forest algorithm was chosen to train the training dataset, because random forest gives high accuracy. Here the outcome is classe, and all the other variables are considered predictors.  
+```{r, cache=TRUE}
+set.seed(1299)
+fitControl <- trainControl(method = "cv", number = 5, repeats = 3)
+modfit <- train(classe~., data=training, method="rf",  trControl=fitControl, verbose=FALSE)
+modfit
+ggplot(modfit)
+modfit$finalModel
+```
+
+The result suggested that the final value for the model is mtry=27. This is because the accuracy is the highest when mtry=27. The corresponding accuracy is 0.9952446. The in sample error is 1-0.9952446=0.0047554.  
+
+#### Cross validation  
+In random forests, there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error, since cross-validation has been estimated internally.  
+
+#### Out of sample error  
+Use the model to predict the out of sample error on the testing dataset.  
+```{r}
+testingout <- predict(modfit, newdata=testing)
+testingtbl<-table(testingout, testing$classe)
+testing_accuracy <- sum(diag(testingtbl))/sum(testingtbl)
+testing_err <- 1-testing_accuracy
+testing_err
+```
+That is, the out of sample error is `r testing_err`.  
+
+#### Use the prediction model to predict 20 different test cases.  
+```{r}
+# load the test dataset
+testx<-read.csv("pml-testing.csv",na.strings = c("NA","","#DIV/0!"))
+
+# remove the columns with high NA composition (>75% is NA) 
+nrtest <- nrow(testx)
+nctest <- ncol(testx)
+indnatest <- c()
+for (i in 1:nctest) {
+    nacheck <- sum(is.na(testx[,i]))>0.75*nrtest
+    if (nacheck==1) {
+        indnatest <- c(indnatest,i)
+    }
+}
+testx2 <- testx[,-indnatest]
+
+# keep the complete cases
+testx3 <- testx2[complete.cases(testx2),]
+dim(testx2)
+dim(testx3)
+
+# remove meaningless columns for prediction
+indrmtest <- grep("timestamp|X|user_name|new_window", names(testx3))
+testx4 <-testx3[,-indrmtest]
+dim(testx4)
+
+# predict test dataset outcome
+testxout <- predict(modfit, newdata=testx)
+testxout
