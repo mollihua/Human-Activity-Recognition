@@ -62,20 +62,22 @@ dim(testing)
 ```
 
 #### Model fitting  
-The random forest algorithm was chosen to train the training dataset, because random forest gives high accuracy. Here the outcome is classe, and all the other variables are considered predictors.  
+The random forest algorithm is chosen to train the training dataset, because random forest gives high accuracy. Here the outcome is classe, and all the other variables are considered predictors.  
 ```{r, cache=TRUE}
 set.seed(1299)
-fitControl <- trainControl(method = "cv", number = 5, repeats = 3)
+
+# use 5-fold cross-validations as the resampling scheme 
+fitControl <- trainControl(method = "cv", number = 5)
 modfit <- train(classe~., data=training, method="rf",  trControl=fitControl, verbose=FALSE)
 modfit
 ggplot(modfit)
 modfit$finalModel
 ```
 
-The result suggested that the final value for the model is mtry=27. This is because the accuracy is the highest when mtry=27. The corresponding accuracy is 0.9952446. The in sample error is 1-0.9952446=0.0047554.  
+The result suggested that the final value for the model is mtry=27. This is because the accuracy is the highest when mtry=27. The corresponding accuracy is 0.9958388 The in sample error is 1-0.9958388=0.0041612.  
 
 #### Cross validation  
-In random forests, there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error, since cross-validation has been estimated internally.  
+In random forests, generally there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error, since cross-validation has been estimated internally. In this study, we assume the training dataset and the testing dataset are randomized, and therefore we should expect both the in sample error (from the training dataset) and out of sample error (from the testing dataset) are unbiased.  
 
 #### Out of sample error  
 Use the model to predict the out of sample error on the testing dataset.  

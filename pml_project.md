@@ -73,14 +73,6 @@ Split the dataset "plm-training.csv" into a training set (60%) and and a testing
 ```r
 # split the dataset "pml-training.csv" into a training set and a testing set
 library(caret)
-```
-
-```
-## Loading required package: lattice
-## Loading required package: ggplot2
-```
-
-```r
 library(ggplot2)
 
 inTrain <- createDataPartition(y=datax4$classe, p=0.6, list=FALSE)
@@ -102,21 +94,14 @@ dim(testing)
 ```
 
 #### Model fitting  
-The random forest algorithm was chosen to train the training dataset, because random forest gives high accuracy. Here the outcome is classe, and all the other variables are considered predictors.  
+The random forest algorithm is chosen to train the training dataset, because random forest gives high accuracy. Here the outcome is classe, and all the other variables are considered predictors.  
 
 ```r
 set.seed(1299)
-fitControl <- trainControl(method = "cv", number = 5, repeats = 3)
+
+# use 5-fold cross-validations as the resampling scheme 
+fitControl <- trainControl(method = "cv", number = 5)
 modfit <- train(classe~., data=training, method="rf",  trControl=fitControl, verbose=FALSE)
-```
-
-```
-## Loading required package: randomForest
-## randomForest 4.6-12
-## Type rfNews() to see new features/changes/bug fixes.
-```
-
-```r
 modfit
 ```
 
@@ -133,9 +118,9 @@ modfit
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9921871  0.9901166  0.003535123  0.004472005
-##   27    0.9962636  0.9952737  0.001452034  0.001836650
-##   53    0.9909988  0.9886136  0.001784941  0.002257571
+##    2    0.9910834  0.9887199  0.001899622  0.002403137
+##   27    0.9958388  0.9947362  0.001860876  0.002354259
+##   53    0.9943101  0.9928023  0.001550424  0.001961298
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 27.
@@ -159,20 +144,20 @@ modfit$finalModel
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 27
 ## 
-##         OOB estimate of  error rate: 0.31%
+##         OOB estimate of  error rate: 0.27%
 ## Confusion matrix:
 ##      A    B    C    D    E  class.error
-## A 3346    2    0    0    0 0.0005973716
-## B    9 2268    2    0    0 0.0048266784
-## C    0    5 2048    1    0 0.0029211295
-## D    0    0    9 1920    1 0.0051813472
-## E    0    0    0    7 2158 0.0032332564
+## A 3346    1    0    0    1 0.0005973716
+## B    7 2268    4    0    0 0.0048266784
+## C    0    7 2047    0    0 0.0034079844
+## D    0    0    7 1922    1 0.0041450777
+## E    0    1    0    3 2161 0.0018475751
 ```
 
-The result suggested that the final value for the model is mtry=27. This is because the accuracy is the highest when mtry=27. The corresponding accuracy is 0.9952446. The in sample error is 1-0.9952446=0.0047554.  
+The result suggested that the final value for the model is mtry=27. This is because the accuracy is the highest when mtry=27. The corresponding accuracy is 0.9958388 The in sample error is 1-0.9958388=0.0041612.  
 
 #### Cross validation  
-In random forests, there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error, since cross-validation has been estimated internally.  
+In random forests, generally there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error, since cross-validation has been estimated internally. In this study, we assume the training dataset and the testing dataset are randomized, and therefore we should expect both the in sample error (from the training dataset) and out of sample error (from the testing dataset) are unbiased.  
 
 #### Out of sample error  
 Use the model to predict the out of sample error on the testing dataset.  
@@ -186,9 +171,9 @@ testing_err
 ```
 
 ```
-## [1] 0.003058884
+## [1] 0.002039256
 ```
-That is, the out of sample error is 0.0030589.  
+That is, the out of sample error is 0.0020393.  
 
 #### Use the prediction model to predict 20 different test cases.  
 
