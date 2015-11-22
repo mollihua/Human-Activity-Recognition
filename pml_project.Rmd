@@ -2,7 +2,7 @@
 title: 'PML Project: Study Human Activity Recognition'
 author: "Mo Chen"
 date: '2015-11-21'
-output: pdf_document
+output: html_document
 ---
 
 ## 1. Introduction
@@ -117,4 +117,4 @@ dim(testx4)
 
 # predict test dataset outcome
 testxout <- predict(modfit, newdata=testx)
-testxout
+print(testxout)
